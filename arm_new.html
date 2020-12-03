@@ -7,77 +7,80 @@
 
 <script>
 
+/* ------ Define Surface, Arm, and Simulation Parameters ----- */
+	
 let surface = {}
-	surface.width  = 400
-	surface.height = 400
+    surface.width  = 400
+    surface.height = 400
 
 let arm = {}
-	arm.lengths  = [100,100]
-	arm.angles   = [0,0]
-	arm.root_xy  = [200,200]
+    arm.lengths  = [100,100]
+    arm.angles   = [0,0]
+    arm.root_xy  = [200,200]
 
 let simulation = {};
-	simulation.test_angle = 0;
-	simulation.test_angle_abs = 0;
-	simulation.test_angle_abs_max;
-	simulation.test_data = [];
+    simulation.test_angle = 0;
+    simulation.test_angle_abs = 0;
+    simulation.test_angle_abs_max;
+    simulation.test_data = [];
 
-/* ---------------- Init ---------------------- */
+/* ---------------- Define drawing program --------------- */	
 
+// Set canvas size to match surface size
 canvas.width  = surface.width;
 canvas.height = surface.height;
 
+// Start a 2d drawing context
 let ctx = canvas.getContext('2d');
-	ctx.createImageData(surface.width, surface.height);
-	ctx.lineWidth = 10;
-	ctx.strokeStyle = 'rgba(0,0,0,255)';
+    ctx.createImageData(surface.width, surface.height);
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(0,0,0,255)';
 
-/* ---------------- Main loop ----------------- */
-
+/* ----------- Define and run main loop ----------------- */
+	
 (function loop() {
 
-	// Update arm, update canvas
-	arm.angles[0] += .04;
-	draw();
+    // Update arm, update canvas
+    arm.angles[0] += .04;
+    draw();
 
-	// Get canvas pixel data as vector: rgba, 0-255
-	let data = ctx.getImageData(0,0,surface.width,surface.height).data;
+    // Get canvas pixel data as vector: rgba, 0-255
+    let data = ctx.getImageData(0,0,surface.width,surface.height).data;
 	
-	// Sum pixels to get surface coverage
-	let coverage = 0; 
-	for (let i of data) coverage += i;
-	coverage = 100*coverage/(255*surface.width*surface.height);
+    // Sum pixels to get surface coverage
+    let coverage = 0; 
+    for (let i of data) coverage += i;
+    coverage = 100*coverage/(255*surface.width*surface.height);
 
-	// Display result	
-	info.innerHTML = 'coverage: ' + coverage.toFixed(2) + '%';
-
-	// Run again
-	requestAnimationFrame(loop);
+    // Display result	
+    info.innerHTML = 'coverage: ' + coverage.toFixed(2) + '%';
+    
+    // Run again
+    requestAnimationFrame(loop);
 })();
 
-
 /* ---------------------- Functions -------------------- */
-
+	
 function draw(){
 
-	// Get short names for arm lengths and angles
-	let L0 = arm.lengths[0];
-	let L1 = arm.lengths[1];
-	let a  = arm.angles[0];
-	let b  = arm.angles[1];
+    // Get short names for arm lengths and angles
+    let L0 = arm.lengths[0];
+    let L1 = arm.lengths[1];
+    let a  = arm.angles[0];
+    let b  = arm.angles[1];
 
-	// Get each node x,y position
-	let x0 = arm.root_xy[0];
-	let y0 = arm.root_xy[1];
-	let x1 = x0 + L0*Math.cos(a);
-	let y1 = y0 + L0*Math.sin(a);
-	let x2 = x1 + L1*Math.cos(a+b);
-	let y2 = y1 + L1*Math.sin(a+b);
+    // Get each node x,y position
+    let x0 = arm.root_xy[0];
+    let y0 = arm.root_xy[1];
+    let x1 = x0 + L0*Math.cos(a);
+    let y1 = y0 + L0*Math.sin(a);
+    let x2 = x1 + L1*Math.cos(a+b);
+    let y2 = y1 + L1*Math.sin(a+b);
 
-	// Draw Arm
-	ctx.beginPath()
-	ctx.moveTo(x1,(surface.height-y1))
-	ctx.lineTo(x2,(surface.height-y2))
-	ctx.stroke() }
+    // Draw Arm
+    ctx.beginPath()
+    ctx.moveTo(x1,(surface.height-y1))
+    ctx.lineTo(x2,(surface.height-y2))
+    ctx.stroke() }
 
 </script>
