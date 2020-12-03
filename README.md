@@ -1,3 +1,5 @@
 # Wiper blade with canvas2d
 
-Test surface coverage by drawing arm and directly summing up pixels with `.getImageData()`
+Test surface coverage:
+- draw arm as it follows feasible path
+- sum pixel color data to get coverage %
