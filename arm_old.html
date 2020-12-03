@@ -1,0 +1,180 @@
+<style>
+	
+div{
+	position:absolute;
+	left:20px; top:0px;	width:500px;height:250px; }
+
+canvas{ 
+	position:absolute; 
+	left:20px; top:250px; 
+	border:solid 1px; }
+
+</style>
+
+<div>
+	<h2> Wiper Blade </h2> 
+	Find x,y to maximize surface area <hr>
+	<p> Adjust slider to change speed </p>
+	<input type='range' min='1' max='500' value='1' id='slider'>
+	<p id='p'> </p>
+</div>
+
+<canvas id='canvas_surf'> </canvas>
+<canvas id='canvas_arm'>  </canvas>
+
+<div style= 
+'background-color:#f7f7f7; position:absolute; left:550px; height:500px;
+ overflow-y:auto;'> 
+	
+	<h2> Results </h2>
+ 	<p id='info'> </p>
+ </div>
+
+<script>
+
+let w = 500
+let h = 300
+
+let L1 = h/3;
+let L2 = h/2;
+
+let x0_min = 100, x0_max = 300;
+let y0_min = 5,   y0_max =  20;
+
+let x0, y0, x1, y1, x2, y2;
+
+let a = 1.7;
+let b =  .5;
+
+let a_vel = .01;
+let b_vel = .00;
+
+let steps_per_update = 10;
+
+let total_run_angle     = 0;
+let total_run_angle_max = 10;
+
+let max_runs = 100;
+
+let pt0 = new_test_pt();
+
+x0 = pt0.x;
+y0 = pt0.y;
+
+let results = [];
+
+canvas_arm.width  = canvas_surf.width  = w;
+canvas_arm.height = canvas_surf.height = h;
+
+ctx_arm  = canvas_arm.getContext('2d'); 
+ctx_arm.lineWidth = 10;
+ctx_arm.strokeStyle = 'rgba(0,0,255,255)';
+
+ctx_surf = canvas_surf.getContext('2d');
+ctx_surf.createImageData(300,300);
+ctx_surf.lineWidth = 10;
+ctx_surf.strokeStyle = 'rgba(0,0,0,255)';
+
+slider.oninput = () => { steps_per_update = slider.value; }
+
+(function loop(){
+
+	for (let i = 0; i < steps_per_update; i++) {
+
+		update_angle();
+		update_nodes();
+		draw_surface();
+
+		total_run_angle += Math.abs(a_vel);
+
+		if (total_run_angle > total_run_angle_max) {
+			
+			results.push([ 
+				get_surface_coverage(), 
+				x0.toFixed(1), 
+				y0.toFixed(1)])
+
+			info.innerHTML += 
+			`
+			<i>Coverage</i>: ${get_surface_coverage()}%
+			<i>x,y</i>: [${x0.toFixed(1)},${y0.toFixed(1)}] <br>
+			`;
+
+			ctx_surf.clearRect(0,0,w,h)
+			total_run_angle = 0;	
+			a = 1.7;
+			let pt = new_test_pt();
+			x0 = pt.x;
+			y0 = pt.y; 
+		}
+	}	
+
+	draw_arm();
+	draw_tested_points();
+	display_data();
+	requestAnimationFrame(loop);
+})()
+
+function display_data(){
+	
+	p.innerHTML = 
+	`Coverage: ${get_surface_coverage()}% <br>
+	x,y: [${x0.toFixed(1)},${y0.toFixed(1)}]` }
+
+function get_surface_coverage() {
+	let sum = 0; 
+	for (let i of ctx_surf.getImageData(0,0,w,h).data) sum += i;
+	return (100*sum/(255*w*h)).toFixed(2)}
+
+function draw_surface() {
+	ctx_surf.beginPath()
+	ctx_surf.moveTo(x1,(h-y1))
+	ctx_surf.lineTo(x2,(h-y2))
+	ctx_surf.stroke() }
+
+function draw_arm() {
+	ctx_arm.clearRect(0,0,w,h)
+	ctx_arm.beginPath()
+	ctx_arm.moveTo(x0, h-y0)
+	ctx_arm.lineTo(x1, h-y1)
+	ctx_arm.lineTo(x2, h-y2)
+	ctx_arm.stroke() }
+
+function draw_tested_points() {
+	ctx_arm.fillStyle = 'rgba(10,40,10,.2)'
+	ctx_arm.fillRect(x0_min,h-y0_max, x0_max-x0_min, y0_max-y0_min)
+
+	let min = 100;
+	let max = 0;
+
+	for (let i of results) {
+		if (i[0] < min) min = i[0];
+		if (i[0] > max) max = i[0]; }
+
+	for (let i of results) {
+
+		let p = i[0];
+		let x = i[1];
+		let y = i[2];
+
+		let w = 255*(p - min)/(max-min)
+
+		ctx_arm.fillStyle = `rgba(${255-w},0,${w},1)`;
+		ctx_arm.fillRect(x,h-y-3,6,6); }}
+
+function update_angle() {
+	if (x1 < 0 || x2 < 0 || x1 > w || x2 > w) a_vel = - a_vel;
+	if (y1 < 0 || y2 < 0 || y1 > h || y2 > h) a_vel = - a_vel;
+	a += a_vel;  }
+
+function update_nodes(){
+	x1 = x0 + L1*Math.cos(a);
+	x2 = x1 + L2*Math.cos(a+b);
+	y1 = y0 + L1*Math.sin(a);
+	y2 = y1 + L2*Math.sin(a+b); }
+
+function new_test_pt(){
+	let pt = {};
+	pt.x = x0_min + (x0_max - x0_min)*Math.random()
+	pt.y = y0_min + (y0_max - y0_min)*Math.random()
+	return pt; }
